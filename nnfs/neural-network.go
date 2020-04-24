@@ -1,20 +1,17 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"gonum.org/v1/gonum/mat"
+)
 
 func main() {
-	inputs := []float32{1, 2, 3, 2.5}
-
-	weights1 := []float32{0.2, 0.8, -0.5, 1.0}
-	weights2 := []float32{0.5, -0.91, 0.26, -0.5}
-	weights3 := []float32{-0.26, -0.27, 0.17, 0.87}
-
-	var bias1 float32 = 2
-	var bias2 float32 = 3
-	var bias3 float32 = 0.5
-
-	output := []float32{inputs[0]*weights1[0] + inputs[1]*weights1[1] + inputs[2]*weights1[2] + inputs[3]*weights1[3] + bias1,
-		inputs[0]*weights2[0] + inputs[1]*weights2[1] + inputs[2]*weights2[2] + inputs[3]*weights2[3] + bias2,
-		inputs[0]*weights3[0] + inputs[1]*weights3[1] + inputs[2]*weights3[2] + inputs[3]*weights3[3] + bias3}
-	fmt.Println(output)
+	inputs := mat.NewDense(4, 1, []float64{1, 2, 3, 2.5})
+	weights := mat.NewDense(3, 4, []float64{0.2, 0.8, -0.5, 1.0, 0.5, -0.91, 0.26, -0.5, -0.26, -0.27, 0.17, 0.87})
+	biases := mat.NewDense(3, 1, []float64{2, 3, 0.5})
+	output := mat.NewDense(3, 1, nil)
+	output.Product(weights, inputs)
+	output.Add(output, biases)
+	fmt.Println(output.RawMatrix().Data)
 }
