@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
+
+	"./datasets"
 
 	"gonum.org/v1/gonum/mat"
 )
@@ -14,25 +17,24 @@ type Layer_Dense struct {
 	output  *mat.Dense
 }
 
-func NewLayer_Dense(n_inputs int, n_neurons int) Layer_Dense {
-	rand.Seed(time.Now().UnixNano())
+func NewLayer_Dense(n_inputs int, n_neurons int) *Layer_Dense {
 	w := make([]float64, n_inputs*n_neurons)
 	for i := range w {
-		w[i] = -0.1 + rand.Float64()*(0.1-(-0.1))
+		w[i] = -1 + rand.Float64()*(1-(-1))
 	}
-	weights := mat.NewDense(n_inputs, n_neurons, w)
-	return Layer_Dense{weights: weights, biases: nil, output: nil}
+	return &Layer_Dense{weights: mat.NewDense(n_inputs, n_neurons, w), biases: mat.NewDense(1, n_neurons, nil)}
 }
 
 func (m *Layer_Dense) forward(inputs *mat.Dense) {
-	inputRows, _ := inputs.Dims()
-	_, weightCols := m.weights.Dims()
+	var res mat.Dense
+	res.Mul(inputs, m.weights)
+	m.output = mat.NewDense(res.RawMatrix().Rows, res.RawMatrix().Cols, nil)
 
-	m.output = mat.NewDense(inputRows, weightCols, nil)
-	m.output.Product(inputs, m.weights)
-
-	m.biases = mat.NewDense(inputRows, weightCols, nil)
-	m.output.Add(m.output, m.biases)
+	for i := 0; i < res.RawMatrix().Rows; i++ {
+		for j := 0; j < res.RawMatrix().Cols; j++ {
+			m.output.Set(i, j, res.At(i, j)+m.biases.At(0, j))
+		}
+	}
 }
 
 func matPrint(X mat.Matrix) {
@@ -40,14 +42,29 @@ func matPrint(X mat.Matrix) {
 	fmt.Printf("%v\n", fa)
 }
 
-func main() {
-	X := mat.NewDense(3, 4, []float64{1, 2, 3, 2.5, 2.0, 5.0, -1.0, 2.0, -1.5, 2.7, 3.3, -0.8})
+type Activation_ReLU struct {
+	output *mat.Dense
+}
 
-	layer1 := NewLayer_Dense(4, 5)
-	layer2 := NewLayer_Dense(5, 2)
+func (a *Activation_ReLU) forward(inputs *mat.Dense) {
+	a.output = mat.NewDense(inputs.RawMatrix().Rows, inputs.RawMatrix().Cols, nil)
+
+	for i := 0; i < inputs.RawMatrix().Rows; i++ {
+		for j := 0; j < inputs.RawMatrix().Cols; j++ {
+			a.output.Set(i, j, math.Max(0, inputs.At(i, j)))
+		}
+	}
+}
+
+func main() {
+	rand.Seed(time.Now().UnixNano())
+	X, _ := datasets.Spiral_data(100, 3)
+
+	layer1 := NewLayer_Dense(2, 5)
+	activation1 := Activation_ReLU{}
 
 	layer1.forward(X)
 	matPrint(layer1.output)
-	layer2.forward(layer1.output)
-	matPrint(layer2.output)
+	activation1.forward(layer1.output)
+	matPrint(activation1.output)
 }
