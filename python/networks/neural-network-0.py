@@ -8,7 +8,7 @@ def sigmoid(z):
 def sigmoid_derivative(z):
     return sigmoid(z)*(1-sigmoid(z))
 
-class Network(object):
+class Network:
     def __init__(self, sizes):
         self.num_layers = len(sizes)
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
